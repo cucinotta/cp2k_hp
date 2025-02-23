@@ -198,8 +198,6 @@ MODULE qs_scf_post_gpw
    USE voronoi_interface,               ONLY: entry_voronoi_or_bqb
    USE xray_diffraction,                ONLY: calculate_rhotot_elec_gspace,&
                                               xray_diffraction_spectrum
-   USE cp_control_types,                ONLY: hair_probes_type !MARGHERITA
-   USE qs_kind_types,                   ONLY: qs_kind_type !MARGHERITA                                                  
 #include "./base/base_uses.f90"
 
    IMPLICIT NONE
@@ -482,16 +480,7 @@ CONTAINS
                CALL get_qs_env(qs_env, admm_env=admm_env)
                CALL make_mo_eig(mos, nspins, ks_rmpv, scf_control, mo_derivs, admm_env=admm_env)
             ELSE
-            !MARGHERITA ###########################################################################
-               IF (dft_control%hair_probes) THEN      
-                  scf_control%smear%do_smear = .false. !MARGHERITA 
-                  CALL make_mo_eig(mos, dft_control%nspins, ks_rmpv, scf_control, mo_derivs, &
-                                 hair_probes=dft_control%hair_probes, &
-                                 probe=dft_control%probe) !MARGHERITA 
-               ELSE 
-                  CALL make_mo_eig(mos, dft_control%nspins, ks_rmpv, scf_control, mo_derivs)
-               END IF
-            !######################################################################################                        
+               CALL make_mo_eig(mos, nspins, ks_rmpv, scf_control, mo_derivs)
             END IF
             DO ispin = 1, dft_control%nspins
                CALL get_mo_set(mo_set=mos(ispin), eigenvalues=mo_eigenvalues, homo=homo)

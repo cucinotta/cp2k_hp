@@ -53,7 +53,6 @@ MODULE qs_mo_methods
    USE qs_mo_types,                     ONLY: get_mo_set,&
                                               mo_set_type
    USE scf_control_types,               ONLY: scf_control_type
-   USE cp_control_types,                ONLY: hair_probes_type !MARGHERITA      
 #include "./base/base_uses.f90"
 
    IMPLICIT NONE
@@ -814,8 +813,7 @@ CONTAINS
 !>         02.2013 moved from qs_scf_post_gpw
 !>
 ! **************************************************************************************************
-   SUBROUTINE make_mo_eig(mos, nspins, ks_rmpv, scf_control, mo_derivs, admm_env, &
-                           hair_probes, probe) !MARGHERITA 
+   SUBROUTINE make_mo_eig(mos, nspins, ks_rmpv, scf_control, mo_derivs, admm_env)
 
       TYPE(mo_set_type), DIMENSION(:), INTENT(INOUT)     :: mos
       INTEGER, INTENT(IN)                                :: nspins
@@ -830,8 +828,6 @@ CONTAINS
       REAL(KIND=dp), DIMENSION(:), POINTER               :: mo_eigenvalues
       TYPE(cp_fm_type), POINTER                          :: mo_coeff
       TYPE(dbcsr_type), POINTER                          :: mo_coeff_deriv
-      LOGICAL, OPTIONAL   :: hair_probes !MARGHERITA 
-      TYPE(hair_probes_type), DIMENSION(:), OPTIONAL, POINTER  :: probe !MARGHERITA
 
       CALL timeset(routineN, handle)
 
@@ -872,18 +868,8 @@ CONTAINS
          ELSE
             IF (output_unit > 0) WRITE (output_unit, '(4(1X,1F16.8))') mo_eigenvalues(1:homo)
          END IF
-         IF (.NOT. scf_control%diagonalization%mom) THEN
-         !MARGHERITA###########################################################################
-            IF (PRESENT(hair_probes) .eqv. .true.) THEN
-               scf_control%smear%do_smear = .false. !maybe not necessary
-               CALL set_mo_occupation(mo_set=mos(ispin), &
-                              smear=scf_control%smear, &
-                              probe=probe )
-            ELSE 
-               CALL set_mo_occupation(mo_set=mos(ispin), smear=scf_control%smear)
-            END IF
-         !#####################################################################################
-         END IF 
+         IF (.NOT. scf_control%diagonalization%mom) &
+            CALL set_mo_occupation(mo_set=mos(ispin), smear=scf_control%smear)
          IF (output_unit > 0) WRITE (output_unit, '(T2,A,F12.6)') &
             "Fermi Energy [eV] :", mos(ispin)%mu*evolt
       END DO

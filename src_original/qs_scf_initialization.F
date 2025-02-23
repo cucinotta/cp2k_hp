@@ -119,10 +119,6 @@ MODULE qs_scf_initialization
    USE scf_control_types,               ONLY: scf_control_type
    USE xas_env_types,                   ONLY: xas_environment_type
    USE xas_restart,                     ONLY: xas_initialize_rho
-   USE cp_control_types,                ONLY: hair_probes_type !MARGHERITA
-   USE atomic_kind_types,               ONLY: atomic_kind_type !MARGHERITA 
-   USE particle_types,                  ONLY: particle_type !MARGHERITA
-   USE hair_probes,                     ONLY: AO_boundaries !MARGHERITA      
 #include "./base/base_uses.f90"
 
    IMPLICIT NONE
@@ -153,25 +149,7 @@ CONTAINS
       TYPE(scf_control_type), POINTER                    :: my_scf_control
       TYPE(section_vals_type), POINTER                   :: dft_section, input, my_scf_section
 
-      TYPE(mo_set_type), DIMENSION(:), POINTER         :: mos !MARGHERITA 
-      TYPE(atomic_kind_type), POINTER                    :: atomic_kind_set(:) !MARGHERITA               
-      TYPE(particle_type), POINTER                       :: particle_set(:)   !MARGHERITA          
-      TYPE(qs_kind_type), POINTER                        :: qs_kind_set(:)     !MARGHERITA          
-      INTEGER :: ip, np !MARGHERITA
-
       CALL get_qs_env(qs_env, input=input, dft_control=dft_control)
-
-      !MARGHERITA: Initialize Hairy Probe calculation
-      IF (dft_control%hair_probes .eqv. .true.) THEN
-         CALL get_qs_env(qs_env, mos=mos, &
-                atomic_kind_set=atomic_kind_set, qs_kind_set=qs_kind_set, particle_set=particle_set) 
-         np = SIZE(dft_control%probe) 
-         DO ip = 1, np 
-            CALL AO_boundaries (probe=dft_control%probe(ip), atomic_kind_set=atomic_kind_set, qs_kind_set=qs_kind_set, &
-                    particle_set=particle_set, nAO=mos(1)%nao ) !FIX THIS! 
-         END DO 
-      END IF 
-      !MARGHERITA ***********************************
 
       IF (PRESENT(scf_control)) THEN
          my_scf_control => scf_control
@@ -1224,16 +1202,8 @@ CONTAINS
             DO ispin = 1, SIZE(mos)
                CALL get_mo_set(mos(ispin), mo_coeff=mo_coeff, nmo=nmo)
                CALL reorthogonalize_vectors(qs_env, v_matrix=mo_coeff, n_col=nmo)
-               !MARGHERITA ###########################################################################
-               IF (dft_control%hair_probes .eqv. .true. ) THEN
-                  scf_control%smear%do_smear = .false.
-                  CALL set_mo_occupation(mo_set=mos(ispin), &
-                           smear=scf_control%smear, probe=dft_control%probe )
-               ELSE
-                  CALL set_mo_occupation(mo_set=mos(ispin), &
-                                          smear=scf_control%smear)
-               END IF 
-               !######################################################################################
+               CALL set_mo_occupation(mo_set=mos(ispin), &
+                                      smear=scf_control%smear)
             END DO
          END IF
       END IF

@@ -46,8 +46,7 @@
 ! **************************************************************************************************
 MODULE qs_scf
    USE atomic_kind_types,               ONLY: atomic_kind_type
-   USE cp_control_types,                ONLY: dft_control_type, &
-                                              hair_probes_type !MARGHERITA   
+   USE cp_control_types,                ONLY: dft_control_type
    USE cp_dbcsr_api,                    ONLY: dbcsr_copy,&
                                               dbcsr_deallocate_matrix,&
                                               dbcsr_get_info,&
@@ -498,25 +497,10 @@ CONTAINS
 
             IF (do_kpoints) THEN
                ! kpoints
-               !MARGHERITA################################################################################### 
-               IF (dft_control%hair_probes .eqv. .true.) THEN 
-                  scf_control%smear%do_smear = .false. 
-                  CALL qs_scf_new_mos_kp(qs_env, scf_env, scf_control, diis_step, dft_control%probe)
-               ELSE 
-                  CALL qs_scf_new_mos_kp(qs_env, scf_env, scf_control, diis_step)
-               END IF 
-               !##############################################################################################
+               CALL qs_scf_new_mos_kp(qs_env, scf_env, scf_control, diis_step)
             ELSE
                ! Gamma points only
-               !MARGHERITA################################################################################### 
-               IF (dft_control%hair_probes .eqv. .true.) THEN 
-                  scf_control%smear%do_smear = .false. 
-                  CALL qs_scf_new_mos(qs_env, scf_env, scf_control, scf_section, diis_step, energy_only, &
-                              dft_control%probe)  
-               ELSE 
-                  CALL qs_scf_new_mos(qs_env, scf_env, scf_control, scf_section, diis_step, energy_only)
-               END IF 
-               !##############################################################################################
+               CALL qs_scf_new_mos(qs_env, scf_env, scf_control, scf_section, diis_step, energy_only)
             END IF
 
             ! Print requested MO information (can be computationally expensive with OT)
@@ -705,19 +689,9 @@ CONTAINS
       ! this just guarantees that all mo_occupations match the eigenvalues, if smear
       DO ispin = 1, dft_control%nspins
          ! do not reset mo_occupations if the maximum overlap method is in use
-         IF (.NOT. scf_control%diagonalization%mom) THEN
-            !MARGHERITA: if the hair probes section is present, this sends hair_probes to set_mo_occupation subroutine 
-            !and switches off the standard smearing
-            IF (dft_control%hair_probes .eqv. .true.) THEN !MARGHERITA 
-               scf_control%smear%do_smear = .false. !MARGHERITA 
-               CALL set_mo_occupation(mo_set=mos(ispin), &
-                                    smear=scf_control%smear, &
-                                    probe=dft_control%probe) 
-            ELSE 
-               CALL set_mo_occupation(mo_set=mos(ispin), &
-                                    smear=scf_control%smear)          
-            END IF 
-         END IF
+         IF (.NOT. scf_control%diagonalization%mom) &
+            CALL set_mo_occupation(mo_set=mos(ispin), &
+                                   smear=scf_control%smear)
       END DO
 
       SELECT CASE (scf_env%method)
