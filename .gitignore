@@ -379,3 +379,7 @@ tags
 # CLion directories
 /.idea/
 /cmake-build-*
+
+/hp_modules/
+/src_original/
+
