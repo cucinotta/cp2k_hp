@@ -762,7 +762,7 @@ CONTAINS
             END IF
          END IF
          !MARGHERITA***********************************
-         IF (dft_control%hair_probes .eqv. .true.) THEN
+         IF (dft_control%hairy_probes .eqv. .true.) THEN
             WRITE (UNIT=output_unit, FMT="((T3,A,T56,F25.14))") &
             "Electronic entropic energy:", energy%kTS
          WRITE (UNIT=output_unit, FMT="((T3,A,T56,F25.14))") &
